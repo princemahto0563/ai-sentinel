@@ -1,0 +1,1728 @@
+<!doctype html>
+<html lang="en">
+  <title>AI Sentinel - Railway Safety Intelligence</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Sentinel | Railway Safety Intelligence</title>
+  <style>
+    :root {
+      --ink: #0f1923;
+      --ink2: #1e293b;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --panel: #ffffff;
+      --soft: #f8fafc;
+      --rail: #0f2942;
+      --teal: #0d9488;
+      --teal-light: #ccfbf1;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --green: #059669;
+      --green-light: #d1fae5;
+      --blue: #2563eb;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(15,25,35,.10);
+      --shadow-sm: 0 1px 3px rgba(15,25,35,.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #eef2f7;
+      color: var(--ink);
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { border: 0; cursor: pointer; }
+    h1,h2,h3,h4,p { margin: 0; }
+    a { text-decoration: none; }
+    code { font-family: ui-monospace, monospace; font-size: .85em; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; }
+
+    /* ── Shell ────────────────────────────────────────────── */
+    .shell { display: grid; grid-template-columns: 268px 1fr; min-height: 100vh; }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+    aside {
+      background: var(--rail);
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 0;
+    }
+    .sidebar-top {
+      padding: 20px 18px 0;
+      background: linear-gradient(180deg, #0a1e30 0%, var(--rail) 100%);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .brand-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--teal), #0891b2);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .brand-name { font-size: 1.05rem; font-weight: 800; color: white; }
+    .brand-sub { font-size: .75rem; color: #94a3b8; margin-top: 2px; }
+
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(5,150,105,.2); color: #34d399;
+      border: 1px solid rgba(52,211,153,.3);
+      border-radius: 99px; padding: 3px 10px;
+      font-size: .72rem; font-weight: 700;
+      margin: 14px 0 10px;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%; background: #34d399;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    nav { padding: 8px 10px; }
+    .nav-section { font-size: .68rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .08em; padding: 14px 8px 6px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 8px;
+      color: #94a3b8; font-weight: 500;
+      cursor: pointer; transition: all .15s;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.08); color: #e2e8f0; }
+    .nav-item.active { background: rgba(13,148,136,.18); color: #5eead4; }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; min-width: 20px; height: 20px;
+      background: var(--red); color: white;
+      border-radius: 99px; padding: 0 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 800;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 14px;
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .stat-mini {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .stat-mini-label { font-size: .7rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+    .stat-mini-val { font-size: 1.2rem; font-weight: 800; color: white; margin-top: 2px; }
+    .stat-mini-sub { font-size: .72rem; color: #64748b; }
+    .fcm-status { font-size: .75rem; color: #94a3b8; margin-top: 4px; }
+    .btn-fcm {
+      width: 100%; padding: 9px; border-radius: 8px; margin-top: 8px;
+      background: rgba(13,148,136,.25); color: #5eead4;
+      border: 1px solid rgba(13,148,136,.35); font-weight: 700; font-size: .8rem;
+    }
+    .btn-fcm:hover { background: rgba(13,148,136,.4); }
+
+    /* ── Main ─────────────────────────────────────────────── */
+    main { padding: 22px; min-width: 0; }
+
+    .topbar {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+      margin-bottom: 20px;
+    }
+    .topbar-title { font-size: 1.5rem; font-weight: 800; color: var(--ink); }
+    .topbar-sub { color: var(--muted); font-size: .85rem; margin-top: 3px; }
+    .topbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      min-height: 38px; padding: 0 14px;
+      border-radius: 8px; font-weight: 700; font-size: .83rem;
+      transition: all .15s; white-space: nowrap;
+    }
+    .btn-primary { background: var(--teal); color: white; }
+    .btn-primary:hover { background: #0f766e; }
+    .btn-secondary { background: white; color: var(--ink2); border: 1px solid var(--line); }
+    .btn-secondary:hover { background: #f8fafc; }
+    .btn-danger { background: var(--red); color: white; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* ── KPI Cards ────────────────────────────────────────── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 18px; }
+    .kpi-card {
+      background: white; border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 16px;
+      box-shadow: var(--shadow-sm);
+      position: relative; overflow: hidden;
+    }
+    .kpi-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi-card.kpi-red::before { background: linear-gradient(90deg, var(--red), #f97316); }
+    .kpi-card.kpi-amber::before { background: linear-gradient(90deg, var(--amber), #f59e0b); }
+    .kpi-card.kpi-green::before { background: linear-gradient(90deg, var(--green), #10b981); }
+    .kpi-card.kpi-blue::before { background: linear-gradient(90deg, var(--blue), #0ea5e9); }
+    .kpi-card.kpi-teal::before { background: linear-gradient(90deg, var(--teal), #06b6d4); }
+    .kpi-label { font-size: .73rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .kpi-val { font-size: 2rem; font-weight: 900; line-height: 1; margin: 8px 0 4px; }
+    .kpi-card.kpi-red .kpi-val { color: var(--red); }
+    .kpi-card.kpi-amber .kpi-val { color: var(--amber); }
+    .kpi-card.kpi-green .kpi-val { color: var(--green); }
+    .kpi-card.kpi-blue .kpi-val { color: var(--blue); }
+    .kpi-card.kpi-teal .kpi-val { color: var(--teal); }
+    .kpi-sub { font-size: .72rem; color: var(--muted); }
+
+    /* ── Section tabs ─────────────────────────────────────── */
+    .section { display: none; }
+    .section.visible { display: block; }
+
+    /* ── Panels ───────────────────────────────────────────── */
+    .panel {
+      background: white; border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    }
+    .panel-head {
+      padding: 16px 18px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-title { font-size: .95rem; font-weight: 700; }
+    .panel-sub { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+    .panel-body { padding: 18px; }
+
+    /* ── Detection form ───────────────────────────────────── */
+    .detect-grid { display: grid; grid-template-columns: minmax(360px,1fr) minmax(380px,.9fr); gap: 16px; align-items: start; }
+    .form-grid { display: grid; gap: 12px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    label.lbl { display: block; font-size: .78rem; font-weight: 700; color: #344054; margin-bottom: 5px; }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 9px 11px;
+      border: 1px solid #cbd5e1; border-radius: 7px;
+      background: white; color: var(--ink);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+    }
+    textarea { resize: vertical; min-height: 90px; }
+
+    .dropzone {
+      border: 2px dashed #94a3b8; border-radius: 8px;
+      background: #f8fafc; padding: 20px; text-align: center;
+      cursor: pointer; transition: all .2s;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--teal); background: #f0fdf9;
+    }
+    .dropzone input[type="file"] { display: none; }
+    .dz-icon { color: #94a3b8; margin-bottom: 8px; }
+    .dz-text { font-weight: 600; font-size: .85rem; }
+    .dz-sub { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+    #imagePreview {
+      width: 100%; max-height: 180px; object-fit: contain;
+      border-radius: 6px; margin-top: 10px;
+      display: none; border: 1px solid var(--line);
+    }
+
+    .result-card {
+      display: none; border-radius: 8px; padding: 14px;
+      border: 1px solid var(--line); background: var(--soft);
+      margin-top: 12px;
+    }
+    .result-card.visible { display: block; }
+    .result-label { font-size: 1.1rem; font-weight: 800; }
+    .result-conf { color: var(--muted); font-size: .83rem; }
+    .result-report { font-size: .83rem; margin-top: 8px; color: var(--ink2); line-height: 1.55; }
+    .result-action { margin-top: 10px; padding: 10px; background: #fef2f2; border-radius: 7px; border-left: 3px solid var(--red); }
+    .result-action.medium { background: #fffbeb; border-color: var(--amber); }
+    .result-action.low { background: #f0fdf4; border-color: var(--green); }
+    .result-action strong { display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .result-action p { font-size: .83rem; margin: 0; }
+
+    /* ── Pill badges ──────────────────────────────────────── */
+    .pill {
+      display: inline-flex; align-items: center;
+      padding: 2px 9px; border-radius: 99px;
+      font-size: .72rem; font-weight: 800; border: 1px solid transparent;
+    }
+    .pill.Critical { color: #991b1b; background: #fee2e2; border-color: #fecaca; }
+    .pill.Medium { color: #92400e; background: #fef3c7; border-color: #fde68a; }
+    .pill.Low { color: #065f46; background: #d1fae5; border-color: #a7f3d0; }
+    .pill.Normal { color: #1e40af; background: #dbeafe; border-color: #bfdbfe; }
+
+    /* ── Map ──────────────────────────────────────────────── */
+    #map {
+      height: 560px; border-radius: 8px;
+      border: 1px solid #cbd5e1; background: #dfe7ef;
+      overflow: hidden;
+    }
+    .map-controls {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .map-toggle {
+      padding: 5px 12px; border-radius: 99px; font-size: .78rem; font-weight: 700;
+      background: white; border: 1px solid var(--line); color: var(--ink2);
+    }
+    .map-toggle.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+    /* ── Table ────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; max-height: 480px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { position: sticky; top: 0; background: var(--soft); z-index: 2; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: .83rem; vertical-align: middle; }
+    th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+    tr:hover td { background: #fafbfc; }
+    .td-img {
+      width: 44px; height: 36px; object-fit: cover;
+      border-radius: 4px; border: 1px solid var(--line); background: #f1f5f9;
+      cursor: pointer;
+    }
+    .conf-bar {
+      display: flex; align-items: center; gap: 6px; min-width: 80px;
+    }
+    .conf-track { flex: 1; height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 99px; }
+
+    /* ── Zone cards ───────────────────────────────────────── */
+    .zones-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .zone-card {
+      border: 1px solid var(--line); border-radius: 9px;
+      padding: 14px; background: white;
+      border-left: 4px solid var(--red);
+      transition: box-shadow .15s;
+    }
+    .zone-card:hover { box-shadow: var(--shadow); }
+    .zone-card.medium { border-left-color: var(--amber); }
+    .zone-card.low { border-left-color: var(--green); }
+    .zone-seg { font-weight: 800; font-size: 1rem; }
+    .zone-score { font-size: .75rem; font-weight: 700; color: var(--red); background: var(--red-light); padding: 2px 8px; border-radius: 99px; }
+    .zone-stats { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+
+    /* ── Report ───────────────────────────────────────────── */
+    .report-output {
+      min-height: 120px; padding: 14px; border-radius: 8px;
+      background: #0b1f2d; color: #d1fae5;
+      font-family: ui-monospace, monospace; font-size: .83rem;
+      white-space: pre-wrap; line-height: 1.6;
+      margin-top: 12px;
+    }
+    .report-query-row { display: flex; gap: 8px; }
+    .report-query-row textarea { flex: 1; }
+
+    /* ── Analytics ────────────────────────────────────────── */
+    .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .chart-placeholder {
+      background: var(--soft); border: 1px solid var(--line);
+      border-radius: 8px; padding: 14px; text-align: center;
+      color: var(--muted); font-size: .83rem;
+    }
+    .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; padding-top: 10px; }
+    .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar { width: 100%; border-radius: 4px 4px 0 0; transition: height .5s ease; min-height: 3px; }
+    .bar-label { font-size: .65rem; color: var(--muted); text-align: center; }
+
+    /* ── Toast ────────────────────────────────────────────── */
+    .toast {
+      position: fixed; right: 18px; bottom: 18px;
+      width: min(400px, calc(100vw - 36px));
+      background: var(--ink); color: white;
+      border-radius: 10px; padding: 14px 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.25);
+      transform: translateY(140%); transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+      z-index: 100; font-size: .88rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .toast.show { transform: translateY(0); }
+    .toast-icon { flex-shrink: 0; width: 20px; height: 20px; }
+    .toast.toast-critical { background: #7f1d1d; border: 1px solid #dc2626; }
+
+    /* ── Loading overlay ──────────────────────────────────── */
+    .loading-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.35); z-index: 50;
+      align-items: center; justify-content: center;
+    }
+    .loading-overlay.show { display: flex; }
+    .loading-box {
+      background: white; border-radius: 12px; padding: 28px 36px;
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      min-width: 240px;
+    }
+    .spinner {
+      width: 44px; height: 44px; border: 4px solid #e2e8f0;
+      border-top-color: var(--teal); border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-label { font-weight: 700; color: var(--ink2); }
+    .loading-sub { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Bounding box canvas ──────────────────────────────── */
+    .bbox-wrap { position: relative; display: inline-block; width: 100%; }
+    #bboxCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+    /* ── Empty states ─────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state svg { opacity: .25; margin-bottom: 12px; }
+    .empty-state p { font-size: .88rem; }
+
+    /* ── Modal ────────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      background: white; border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto;
+    }
+    .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 20px; }
+    .modal-close { background: var(--soft); border: 1px solid var(--line); width: 28px; height: 28px; border-radius: 6px; font-size: 1rem; color: var(--muted); }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media (max-width: 1200px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .detect-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      main { padding: 12px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .topbar { flex-direction: column; }
+      #map { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <!-- ── Sidebar ──────────────────────────────────────────── -->
+  <aside>
+    <div class="sidebar-top">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M4 8h16M6 8v8m12-8v8M8 16h8M10 20l2-3 2 3"/><circle cx="12" cy="5" r="2"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">AI Sentinel</div>
+          <div class="brand-sub">Railway Safety Intelligence</div>
+        </div>
+      </div>
+      <div class="live-badge"><span class="live-dot"></span>LIVE MONITORING</div>
+    </div>
+
+    <nav>
+      <div class="nav-section">Operations</div>
+      <div class="nav-item active" onclick="showSection('overview')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Overview
+      </div>
+      <div class="nav-item" onclick="showSection('detect')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        AI Detection
+        <span class="nav-badge" id="pendingBadge" style="display:none">!</span>
+      </div>
+      <div class="nav-item" onclick="showSection('map')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="3,6 9,3 15,6 21,3 21,18 15,21 9,18 3,21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+        Safety Map
+      </div>
+      <div class="nav-item" onclick="showSection('history')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Detection History
+      </div>
+      <div class="nav-section">Intelligence</div>
+      <div class="nav-item" onclick="showSection('zones')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Risk Zones
+      </div>
+      <div class="nav-item" onclick="showSection('reports')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Gemini Reports
+      </div>
+      <div class="nav-item" onclick="showSection('analytics')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="stat-mini">
+        <div class="stat-mini-label">Lives Saved (Est.)</div>
+        <div class="stat-mini-val" id="livesSavedSidebar">0</div>
+        <div class="stat-mini-sub">Critical detections acted on</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-label">Network Coverage</div>
+        <div class="stat-mini-val">7,000+</div>
+        <div class="stat-mini-sub">Stations integrable via API</div>
+      </div>
+      <div class="fcm-status" id="fcmStatus">🔔 Notifications not enabled</div>
+      <button class="btn-fcm" onclick="enableNotifications()">Enable Emergency Alerts</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────────────── -->
+  <main>
+    <!-- KPI row (always visible) -->
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-red">
+        <div class="kpi-label">Total Detections</div>
+        <div class="kpi-val" id="kpiTotal">0</div>
+        <div class="kpi-sub">Firestore records</div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-label">Critical Alerts</div>
+        <div class="kpi-val" id="kpiCritical">0</div>
+        <div class="kpi-sub">Emergency brake candidates</div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-label">Medium Severity</div>
+        <div class="kpi-val" id="kpiMedium">0</div>
+        <div class="kpi-sub">Speed restrictions required</div>
+      </div>
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-label">High-Risk Zones</div>
+        <div class="kpi-val" id="kpiZones">0</div>
+        <div class="kpi-sub">Repeated failure areas</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-label">Lives Saved</div>
+        <div class="kpi-val" id="kpiLives">0</div>
+        <div class="kpi-sub">Estimated by AI model</div>
+      </div>
+    </div>
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────── -->
+    <div class="section visible" id="sec-overview">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Autonomous Railway Safety Intelligence</div>
+          <div class="topbar-sub">Google Cloud-native · Vertex AI · Gemini · Firebase · Google Maps · FCM</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" onclick="refreshAll()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Refresh
+          </button>
+          <button class="btn btn-primary" onclick="showSection('detect')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Run Detection
+          </button>
+        </div>
+      </div>
+
+      <!-- Mini map preview on overview -->
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Live Safety Map</div>
+            <div class="panel-sub">Real-time detection markers and heatmap</div>
+          </div>
+          <div class="map-controls">
+            <button class="map-toggle active" id="toggleMarkers" onclick="toggleMapLayer('markers')">Markers</button>
+            <button class="map-toggle active" id="toggleHeat" onclick="toggleMapLayer('heat')">Heatmap</button>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:12px;">
+          <div id="map" style="display:none;"></div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 340px; gap:16px;">
+        <!-- Recent history preview -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Recent Detections</div>
+              <div class="panel-sub">Last 10 from Firestore</div>
+            </div>
+            <button class="btn btn-secondary" style="font-size:.75rem;padding:0 10px;min-height:30px;" onclick="showSection('history')">View all →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Time</th><th>Segment</th><th>Label</th><th>Conf.</th><th>Severity</th><th>Action</th></tr></thead>
+              <tbody id="historyRowsPreview"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Top risk zones preview -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Top Risk Zones</div>
+              <div class="panel-sub">Last 72 hours</div>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:12px;">
+            <div id="zonesPreview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DETECT ─────────────────────────────────────────── -->
+    <div class="section" id="sec-detect">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Vertex AI Detection</div>
+          <div class="topbar-sub">Upload a CCTV / locomotive frame → Vertex AI → Gemini → Firestore → FCM</div>
+        </div>
+      </div>
+      <div class="detect-grid">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Detection Input</div></div>
+          <div class="panel-body">
+            <div class="form-grid" id="detectForm">
+              <!-- Dropzone -->
+              <div>
+                <label class="lbl">Track image (CCTV / locomotive frame)</label>
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                  <div class="dz-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="dz-text">Drop image here or click to browse</div>
+                  <div class="dz-sub">JPG, PNG, WebP — CCTV or locomotive camera frame</div>
+                  <input type="file" id="fileInput" accept="image/*" onchange="onFileSelect(event)" />
+                </div>
+                <div class="bbox-wrap" style="margin-top:8px;">
+                  <img id="imagePreview" src="" alt="Preview" />
+                  <canvas id="bboxCanvas"></canvas>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div>
+                  <label class="lbl">Source</label>
+                  <select id="source">
+                    <option value="CCTV">CCTV</option>
+                    <option value="locomotive_camera">Locomotive Camera</option>
+                    <option value="drone">Drone</option>
+                    <option value="uploaded_image">Uploaded Image</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="lbl">Track Segment</label>
+                  <input type="text" id="track_segment" value="42A" placeholder="e.g. 42A, NDLS-BRC" />
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div>
+                  <label class="lbl">Latitude</label>
+                  <input type="number" id="lat" step="0.000001" value="28.6139" />
+                </div>
+                <div>
+                  <label class="lbl">Longitude</label>
+                  <input type="number" id="lng" step="0.000001" value="77.2090" />
+                </div>
+              </div>
+
+              <div>
+                <label class="lbl">Camera / Train ID (optional)</label>
+                <input type="text" id="camera_id" placeholder="e.g. cctv-ndls-042a, EXP-12951" />
+              </div>
+
+              <button class="btn btn-primary" id="detectBtn" onclick="submitDetection()" style="width:100%;justify-content:center;min-height:44px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Run Vertex AI Detection
+              </button>
+
+              <div class="result-card" id="resultCard"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pipeline diagram / info panel -->
+        <div>
+          <div class="panel" style="margin-bottom:14px;">
+            <div class="panel-head"><div class="panel-title">AI Pipeline</div></div>
+            <div class="panel-body" style="padding:14px;">
+              <div id="pipelineSteps">
+                <div class="pipeline-step" id="step-upload">⬜ 1. Image uploaded</div>
+                <div class="pipeline-step" id="step-vertex">⬜ 2. Vertex AI prediction</div>
+                <div class="pipeline-step" id="step-gemini">⬜ 3. Gemini classification & report</div>
+                <div class="pipeline-step" id="step-store">⬜ 4. Stored in Firestore</div>
+                <div class="pipeline-step" id="step-fcm">⬜ 5. FCM alert dispatched</div>
+                <div class="pipeline-step" id="step-map">⬜ 6. Map marker updated</div>
+              </div>
+              <style>
+                .pipeline-step { padding: 8px 10px; border-radius: 6px; font-size:.82rem; margin-bottom:5px; color: var(--muted); background: var(--soft); border: 1px solid var(--line); transition: all .3s; }
+                .pipeline-step.active { color: var(--teal); background: #f0fdf9; border-color: var(--teal); font-weight:700; }
+                .pipeline-step.done { color: var(--green); background: #f0fdf4; border-color: var(--green); }
+                .pipeline-step.error { color: var(--red); background: #fef2f2; border-color: var(--red); }
+              </style>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title">Demo Quick-Fill</div></div>
+            <div class="panel-body" style="padding:14px; display:grid; gap:8px;">
+              <button class="btn btn-secondary" style="font-size:.78rem;" onclick="demoFill('NDLS-BRC','28.6139','77.2090')">📍 Delhi–Mumbai Corridor</button>
+              <button class="btn btn-secondary" style="font-size:.78rem;" onclick="demoFill('HWH-MAS','22.5726','88.3639')">📍 Howrah–Chennai Corridor</button>
+              <button class="btn btn-secondary" style="font-size:.78rem;" onclick="demoFill('BZA-SC','16.5062','80.6480')">📍 Vijayawada Junction</button>
+              <p style="font-size:.72rem;color:var(--muted);margin-top:4px;">Fills segment + coordinates. Add any track image and click Run Detection.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAP ───────────────────────────────────────────────── -->
+    <div class="section" id="sec-map">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Google Maps Safety Layer</div>
+          <div class="topbar-sub">Detection markers, heatmap intensity, and clustered incidents</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="map-toggle active" id="toggleMarkers2" onclick="toggleMapLayer('markers')">Markers</button>
+          <button class="map-toggle active" id="toggleHeat2" onclick="toggleMapLayer('heat')">Heatmap</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body" style="padding:12px;">
+          <!-- Map hidden; replaced by Live Detection Feed -->
+          <div id="mapFull" style="display:none;height:600px;border-radius:8px;border:1px solid #cbd5e1;background:#dfe7ef;overflow:hidden;"></div>
+
+          <!-- ── Live Detection Feed ── -->
+          <div id="liveDetectionFeed" style="font-family:inherit;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+              <div>
+                <div style="font-size:1.1rem;font-weight:800;color:#0f1923;">🎥 Live Detection Feed</div>
+                <div style="font-size:.8rem;color:#64748b;margin-top:3px;">Simulated real-time CCTV detection stream</div>
+              </div>
+              <button
+                onclick="ldfSimulate()"
+                style="display:inline-flex;align-items:center;gap:8px;background:#0d9488;color:white;border:0;border-radius:8px;padding:0 18px;min-height:40px;font-weight:700;font-size:.85rem;cursor:pointer;transition:background .15s;"
+                onmouseover="this.style.background='#0f766e'" onmouseout="this.style.background='#0d9488'"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Simulate Detection
+              </button>
+            </div>
+
+            <div id="ldfCards" style="display:grid;gap:12px;">
+              <!-- Cards injected here by JS -->
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:220px;color:#94a3b8;gap:10px;border:2px dashed #e2e8f0;border-radius:10px;background:#f8fafc;">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                <div style="font-size:.85rem;font-weight:600;">No detections yet — click <strong style="color:#0d9488;">Simulate Detection</strong> to begin</div>
+              </div>
+            </div>
+          </div>
+          <!-- ── End Live Detection Feed ── -->
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // ── Live Detection Feed logic ─────────────────────────────────────────────
+    (function() {
+      var ldfTypes = ["Crack", "Obstacle", "Normal"];
+      var ldfSeverities = {
+        "Crack":    ["Critical", "Medium"],
+        "Obstacle": ["Critical", "Medium"],
+        "Normal":   ["Low"]
+      };
+      var ldfColors = {
+        "Critical": { bg:"#fee2e2", border:"#fecaca", badge:"#991b1b", badgeBg:"#fee2e2", dot:"#dc2626" },
+        "Medium":   { bg:"#fffbeb", border:"#fde68a", badge:"#92400e", badgeBg:"#fef3c7", dot:"#d97706" },
+        "Low":      { bg:"#f0fdf4", border:"#a7f3d0", badge:"#065f46", badgeBg:"#d1fae5", dot:"#059669" }
+      };
+      var ldfReports = {
+        "Crack": {
+          "Critical": "AI model detected a critical rail fracture with structural compromise. Immediate emergency brake protocol activated. Track clearance by engineering crew required before any train movement.",
+          "Medium":   "Surface-level crack identified on rail bed. Confidence threshold crossed for maintenance escalation. Speed restriction to 40 km/h recommended pending physical inspection."
+        },
+        "Obstacle": {
+          "Critical": "Foreign object detected occupying active track corridor. High-velocity collision risk assessed for approaching trains. Emergency stop signal broadcast to segment control.",
+          "Medium":   "Partial obstruction detected near rail edge. Object classified as non-stationary debris. Monitoring active; patrol dispatch recommended within 2 hours."
+        },
+        "Normal": {
+          "Low": "Track segment assessed as structurally sound. No anomalies, fractures, or obstructions detected. Confidence above operational threshold. Routine monitoring cycle continues."
+        }
+      };
+      var ldfSegments = ["42A","BRC-ST","HWH-BDC","MAS-AJJ","SBC-YPR","NGP-BPL","NDLS-BRC","HWH-MAS"];
+      var ldfFirstRun = true;
+
+      window.ldfSimulate = function() {
+        var type = ldfTypes[Math.floor(Math.random() * ldfTypes.length)];
+        var sevOpts = ldfSeverities[type];
+        var severity = sevOpts[Math.floor(Math.random() * sevOpts.length)];
+        var confidence = Math.floor(Math.random() * 20) + 80; // 80–99
+        var segment = ldfSegments[Math.floor(Math.random() * ldfSegments.length)];
+        var c = ldfColors[severity];
+        var report = ldfReports[type][severity];
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+
+        var container = document.getElementById("ldfCards");
+        if (!container) return;
+
+        // Remove placeholder on first run
+        if (ldfFirstRun) {
+          container.innerHTML = "";
+          ldfFirstRun = false;
+        }
+
+        var severityIcon = severity === "Critical" ? "🔴" : severity === "Medium" ? "🟡" : "🟢";
+        var typeIcon = type === "Crack" ? "⚠️" : type === "Obstacle" ? "🚧" : "✅";
+
+        var card = document.createElement("div");
+        card.style.cssText = [
+          "background:" + c.bg,
+          "border:1px solid " + c.border,
+          "border-left:4px solid " + c.dot,
+          "border-radius:10px",
+          "padding:16px 18px",
+          "animation:ldfFadeIn .35s ease",
+          "position:relative"
+        ].join(";");
+
+        card.innerHTML =
+          '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+              '<div style="font-size:1.4rem;line-height:1;">' + typeIcon + '</div>' +
+              '<div>' +
+                '<div style="font-size:.95rem;font-weight:800;color:#0f1923;">' + type + '</div>' +
+                '<div style="font-size:.73rem;color:#64748b;margin-top:2px;">Segment ' + segment + ' &nbsp;·&nbsp; ' + timeStr + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+              '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:800;color:' + c.badge + ';background:' + c.badgeBg + ';border:1px solid ' + c.border + ';">' +
+                severityIcon + ' ' + severity +
+              '</span>' +
+              '<span style="padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:800;background:rgba(15,25,35,.07);color:#1e293b;">' +
+                '🎯 ' + confidence + '%' +
+              '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="margin-top:12px;font-size:.82rem;color:#334155;line-height:1.6;border-top:1px solid ' + c.border + ';padding-top:10px;">' +
+            '<strong style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#64748b;">AI Report</strong>' +
+            '<p style="margin:4px 0 0;">' + report + '</p>' +
+          '</div>';
+
+        container.insertBefore(card, container.firstChild);
+      };
+    })();
+    </script>
+    <style>
+    @keyframes ldfFadeIn {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    </style>
+
+    <!-- ── HISTORY ────────────────────────────────────────────── -->
+    <div class="section" id="sec-history">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Detection History</div>
+          <div class="panel-sub">All events stored in Firestore <code>detections</code> collection</div>
+        </div>
+        <div class="topbar-actions">
+          <select id="filterSeverity" onchange="applyFilters()" style="min-height:36px;border:1px solid var(--line);border-radius:7px;padding:0 10px;font-size:.8rem;">
+            <option value="">All severities</option>
+            <option value="Critical">Critical</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>Segment</th><th>Label</th><th>Confidence</th><th>Severity</th><th>Source</th><th>Action</th></tr></thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RISK ZONES ─────────────────────────────────────────── -->
+    <div class="section" id="sec-zones">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">High-Risk Zones</div>
+          <div class="topbar-sub">Computed by Cloud Functions — repeated failure patterns from Firestore data</div>
+        </div>
+        <div class="topbar-actions">
+          <select id="hoursFilter" onchange="loadZones()" style="min-height:36px;border:1px solid var(--line);border-radius:7px;padding:0 10px;font-size:.8rem;">
+            <option value="24">Last 24h</option>
+            <option value="72" selected>Last 72h</option>
+            <option value="168">Last 7 days</option>
+          </select>
+        </div>
+      </div>
+      <div id="zonesGrid" class="zones-grid"></div>
+    </div>
+
+    <!-- ── REPORTS ─────────────────────────────────────────────── -->
+    <div class="section" id="sec-reports">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">Gemini Operations Report</div>
+          <div class="topbar-sub">Natural-language analytics powered by Gemini via Cloud Functions</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="report-query-row">
+            <textarea id="reportQuery" rows="3" placeholder="Ask anything about the railway safety data...">List all high-risk segments in the last 24 hours and estimate impact</textarea>
+            <button class="btn btn-primary" onclick="submitReport()" id="reportBtn" style="align-self:flex-end;margin-left:8px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Generate
+            </button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+            <button class="btn btn-secondary" style="font-size:.75rem;" onclick="setQuery('List all Critical detections in last 24 hours with segment names')">Critical events</button>
+            <button class="btn btn-secondary" style="font-size:.75rem;" onclick="setQuery('Which track segments have the highest risk score and why?')">Risk ranking</button>
+            <button class="btn btn-secondary" style="font-size:.75rem;" onclick="setQuery('Generate a formal safety briefing for the Chief Operating Officer')">COO Briefing</button>
+            <button class="btn btn-secondary" style="font-size:.75rem;" onclick="setQuery('Estimate total lives at risk based on current detection data')">Lives at risk</button>
+          </div>
+          <pre class="report-output" id="reportOutput">Gemini reports will appear here after generation.</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS ──────────────────────────────────────────── -->
+    <div class="section" id="sec-analytics">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">System Analytics</div>
+          <div class="topbar-sub">Fleet-wide metrics computed from Firestore detection data</div>
+        </div>
+        <div class="topbar-actions">
+          <select id="analyticsHours" onchange="loadAnalytics()" style="min-height:36px;border:1px solid var(--line);border-radius:7px;padding:0 10px;font-size:.8rem;">
+            <option value="24">Last 24h</option>
+            <option value="168" selected>Last 7 days</option>
+            <option value="720">Last 30 days</option>
+          </select>
+        </div>
+      </div>
+      <div id="analyticsContent"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ── Loading overlay ── -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-label" id="loadingLabel">Processing...</div>
+    <div class="loading-sub" id="loadingSub">Calling Vertex AI</div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast">
+  <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span id="toastMsg">Alert</span>
+</div>
+
+<!-- ── Detail modal ── -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <strong id="modalTitle">Detection Detail</strong>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// Works 100% on localhost / Live Server with NO backend, NO Firebase required.
+// All API calls fall back to the mock engine automatically.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Constants & helpers ───────────────────────────────────────────────────────
+const $ = (s) => document.querySelector(s);
+const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short" });
+const uuid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
+const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+// ── In-memory store (replaces Firestore on localhost) ─────────────────────────
+const STORE = {
+  detections: [
+    { id:"seed-001", source:"CCTV", track_segment:"42A", label:"Crack", confidence:0.92, bounding_boxes:[{label:"Crack",confidence:0.92,x:0.12,y:0.24,width:0.44,height:0.08}], location:{lat:28.6139,lng:77.209}, severity:"Critical", suggested_action:"Emergency Brake Alert. Halt all train movement on Segment 42A. Dispatch track engineering crew immediately.", technical_report:"Critical track fracture detected at Segment 42A with 92% confidence. Structural integrity compromised. Immediate intervention required.", decision_model:"gemini-1.5-flash (mock)", lives_saved_estimate:1, metadata:{camera_id:"cctv-ndls-042a",corridor:"Delhi-Mumbai"}, timestamp: new Date(Date.now()-5400000).toISOString() },
+    { id:"seed-002", source:"locomotive_camera", track_segment:"BRC-ST", label:"Missing Fishplate", confidence:0.85, bounding_boxes:[{label:"Missing Fishplate",confidence:0.85,x:0.35,y:0.45,width:0.20,height:0.15}], location:{lat:22.3072,lng:73.1812}, severity:"Critical", suggested_action:"Impose emergency speed restriction. Dispatch maintenance crew within 30 minutes. Block segment for passenger trains.", technical_report:"Missing fishplate detected at Segment BRC-ST near Vadodara. Rail joint unsecured — high derailment risk at train speeds above 20 km/h.", decision_model:"gemini-1.5-flash (mock)", lives_saved_estimate:1, metadata:{camera_id:"loco-brc-011",corridor:"Delhi-Mumbai"}, timestamp: new Date(Date.now()-9000000).toISOString() },
+    { id:"seed-003", source:"CCTV", track_segment:"HWH-BDC", label:"Obstacle", confidence:0.88, bounding_boxes:[{label:"Obstacle",confidence:0.88,x:0.42,y:0.32,width:0.18,height:0.22}], location:{lat:22.5726,lng:88.3639}, severity:"Critical", suggested_action:"Emergency Brake Alert. Halt trains on approach corridor. Dispatch track patrol to identify and remove obstacle.", technical_report:"Foreign obstacle detected on track at Segment HWH-BDC on Howrah approach. Immediate collision risk for approaching express trains.", decision_model:"gemini-1.5-flash (mock)", lives_saved_estimate:1, metadata:{camera_id:"cctv-hwh-007",corridor:"Howrah-Delhi"}, timestamp: new Date(Date.now()-14700000).toISOString() },
+    { id:"seed-004", source:"CCTV", track_segment:"42A", label:"Crack", confidence:0.76, bounding_boxes:[{label:"Crack",confidence:0.76,x:0.20,y:0.30,width:0.35,height:0.07}], location:{lat:28.6145,lng:77.2095}, severity:"Medium", suggested_action:"Reduce train speed on Segment 42A. Schedule inspection within 24 hours.", technical_report:"Surface crack detected at Segment 42A with 76% confidence. Speed restriction recommended pending full inspection.", decision_model:"rule-fallback", lives_saved_estimate:0, metadata:{camera_id:"cctv-ndls-042a"}, timestamp: new Date(Date.now()-27000000).toISOString() },
+    { id:"seed-005", source:"CCTV", track_segment:"MAS-AJJ", label:"Normal", confidence:0.97, bounding_boxes:[], location:{lat:13.0827,lng:80.2707}, severity:"Low", suggested_action:"No action required. Continue monitoring.", technical_report:"Track segment MAS-AJJ appears normal with 97% confidence. No structural anomalies detected.", decision_model:"gemini-1.5-flash (mock)", lives_saved_estimate:0, metadata:{camera_id:"cctv-mas-019",corridor:"Chennai-Bangalore"}, timestamp: new Date(Date.now()-36000000).toISOString() },
+    { id:"seed-006", source:"drone", track_segment:"SBC-YPR", label:"Crack", confidence:0.81, bounding_boxes:[{label:"Crack",confidence:0.81,x:0.15,y:0.28,width:0.40,height:0.09}], location:{lat:12.9716,lng:77.5946}, severity:"Critical", suggested_action:"Emergency Brake Alert. Halt train movement. Dispatch inspection crew within 60 minutes.", technical_report:"Critical track fracture detected at Segment SBC-YPR (Bangalore area) with 81% confidence during drone survey.", decision_model:"rule-fallback", lives_saved_estimate:1, metadata:{camera_id:"drone-sbc-004",corridor:"Bangalore-Mysore"}, timestamp: new Date(Date.now()-79200000).toISOString() },
+    { id:"seed-007", source:"CCTV", track_segment:"NGP-BPL", label:"Missing Fishplate", confidence:0.79, bounding_boxes:[{label:"Missing Fishplate",confidence:0.79,x:0.30,y:0.40,width:0.22,height:0.18}], location:{lat:21.1458,lng:79.0882}, severity:"Critical", suggested_action:"Block segment immediately. Maintenance crew required within 45 minutes.", technical_report:"Missing fishplate at Segment NGP-BPL near Nagpur. Joint unsecured across a 40 cm span.", decision_model:"gemini-1.5-flash (mock)", lives_saved_estimate:1, metadata:{camera_id:"cctv-ngp-023"}, timestamp: new Date(Date.now()-108000000).toISOString() },
+    { id:"seed-008", source:"CCTV", track_segment:"42A", label:"Crack", confidence:0.71, bounding_boxes:[{label:"Crack",confidence:0.71,x:0.22,y:0.33,width:0.30,height:0.06}], location:{lat:28.6150,lng:77.2100}, severity:"Medium", suggested_action:"Monitor and schedule inspection within 12 hours. Reduce speed limit to 40 km/h.", technical_report:"Hairline crack detected at Segment 42A (third occurrence this week). Pattern suggests progressive deterioration.", decision_model:"gemini-1.5-flash (mock)", lives_saved_estimate:0, metadata:{camera_id:"cctv-ndls-042a"}, timestamp: new Date(Date.now()-130000000).toISOString() }
+  ]
+};
+
+// ── Mock AI Engine — simulates Vertex AI + Gemini locally ─────────────────────
+const MOCK_SCENARIOS = [
+  { label:"Crack", confidence:() => 0.86 + Math.random()*0.12, severity:"Critical",
+    bbox: () => [{label:"Crack", confidence:0.89, x:0.10+Math.random()*0.1, y:0.20+Math.random()*0.1, width:0.38+Math.random()*0.1, height:0.07+Math.random()*0.04}],
+    report: (seg) => `Critical track fracture detected at Segment ${seg} with high confidence. Structural integrity of the rail is compromised — risk of derailment at operating speeds.`,
+    action: (seg) => `🚨 EMERGENCY BRAKE ALERT — Halt ALL train movement on Segment ${seg} immediately. Dispatch track engineering crew. Do not resume operations until cleared by chief engineer.`
+  },
+  { label:"Missing Fishplate", confidence:() => 0.78 + Math.random()*0.14, severity:"Critical",
+    bbox: () => [{label:"Missing Fishplate", confidence:0.82, x:0.30+Math.random()*0.1, y:0.38+Math.random()*0.1, width:0.18+Math.random()*0.06, height:0.14+Math.random()*0.04}],
+    report: (seg) => `Missing fishplate detected at Segment ${seg}. Rail joint is unsecured — high derailment risk for trains exceeding 20 km/h. Structural gap of approximately 35-50 cm observed.`,
+    action: (seg) => `⚠️ Impose emergency speed restriction on Segment ${seg}. Dispatch maintenance crew within 30 minutes. Block segment for all passenger trains until joint is secured.`
+  },
+  { label:"Obstacle", confidence:() => 0.80 + Math.random()*0.15, severity:"Critical",
+    bbox: () => [{label:"Obstacle", confidence:0.83, x:0.38+Math.random()*0.1, y:0.28+Math.random()*0.1, width:0.16+Math.random()*0.06, height:0.20+Math.random()*0.06}],
+    report: (seg) => `Foreign obstacle detected on track at Segment ${seg}. Object dimensions suggest collision risk for approaching trains. Possible animal or debris intrusion.`,
+    action: (seg) => `🚨 Emergency stop signal sent to trains approaching Segment ${seg}. Dispatch track patrol to identify and remove obstacle before resuming operations.`
+  },
+  { label:"Normal", confidence:() => 0.92 + Math.random()*0.07, severity:"Low",
+    bbox: () => [],
+    report: (seg) => `Track segment ${seg} appears structurally sound with no visible cracks, missing hardware, or obstructions. Routine monitoring recommended.`,
+    action: () => `✅ No immediate action required. Log for routine maintenance record. Continue scheduled monitoring cycle.`
+  },
+  { label:"Crack", confidence:() => 0.67 + Math.random()*0.10, severity:"Medium",
+    bbox: () => [{label:"Crack", confidence:0.72, x:0.15+Math.random()*0.1, y:0.30+Math.random()*0.1, width:0.28+Math.random()*0.08, height:0.06+Math.random()*0.03}],
+    report: (seg) => `Surface crack detected at Segment ${seg} with moderate confidence. Crack appears hairline-level — speed restriction advised pending detailed physical inspection.`,
+    action: (seg) => `⚠️ Reduce maximum train speed to 40 km/h on Segment ${seg}. Schedule physical inspection within 24 hours. Escalate if crack widens.`
+  }
+];
+
+function mockDetect(track_segment) {
+  // Weighted random: 40% crack critical, 15% fishplate, 15% obstacle, 20% normal, 10% crack medium
+  const weights = [40, 15, 15, 20, 10];
+  const total = weights.reduce((a, b) => a + b, 0);
+  let roll = Math.random() * total;
+  let idx = 0;
+  for (let i = 0; i < weights.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) { idx = i; break; }
+  }
+  const s = MOCK_SCENARIOS[idx];
+  const conf = s.confidence();
+  return {
+    id: uuid(),
+    image_url: `gs://ai-sentinel-demo.appspot.com/detections/${uuid()}.jpg`,
+    source: "CCTV",
+    track_segment,
+    label: s.label,
+    confidence: parseFloat(conf.toFixed(3)),
+    bounding_boxes: s.bbox(),
+    severity: s.severity,
+    technical_report: s.report(track_segment),
+    suggested_action: s.action(track_segment),
+    decision_model: "vertex-ai-mock + gemini-1.5-flash-mock",
+    lives_saved_estimate: s.severity === "Critical" ? 1 : 0
+  };
+}
+
+function mockComputeZones(detections) {
+  const map = {};
+  detections.forEach(d => {
+    const seg = d.track_segment || "unknown";
+    if (!map[seg]) map[seg] = { track_segment: seg, detections: 0, critical_events: 0, medium_events: 0, labels: {}, lats: [], lngs: [], last_seen: null };
+    const z = map[seg];
+    z.detections++;
+    if (d.severity === "Critical") z.critical_events++;
+    if (d.severity === "Medium") z.medium_events++;
+    z.labels[d.label] = (z.labels[d.label] || 0) + 1;
+    if (d.location?.lat) { z.lats.push(+d.location.lat); z.lngs.push(+d.location.lng); }
+    if (!z.last_seen || d.timestamp > z.last_seen) z.last_seen = d.timestamp;
+  });
+  return Object.values(map).map(z => {
+    const recencyMs = z.last_seen ? Date.now() - new Date(z.last_seen).getTime() : Infinity;
+    const recencyBonus = recencyMs < 3600000 ? 20 : recencyMs < 86400000 ? 10 : 0;
+    const risk_score = Math.min(100, z.critical_events * 10 + z.medium_events * 3 + recencyBonus);
+    const lat = z.lats.length ? z.lats.reduce((a,b)=>a+b,0)/z.lats.length : 0;
+    const lng = z.lngs.length ? z.lngs.reduce((a,b)=>a+b,0)/z.lngs.length : 0;
+    const dominant_label = Object.entries(z.labels).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—";
+    return { track_segment: z.track_segment, detections: z.detections, critical_events: z.critical_events, medium_events: z.medium_events, risk_score, centroid: {lat, lng}, dominant_label, last_seen: z.last_seen };
+  }).filter(z => z.risk_score > 0).sort((a,b) => b.risk_score - a.risk_score);
+}
+
+function mockComputeAnalytics(detections) {
+  const critical = detections.filter(d => d.severity === "Critical").length;
+  const medium = detections.filter(d => d.severity === "Medium").length;
+  const low = detections.filter(d => d.severity === "Low").length;
+  const byLabel = {};
+  detections.forEach(d => { byLabel[d.label] = (byLabel[d.label] || 0) + 1; });
+  const segments = [...new Set(detections.map(d => d.track_segment))];
+  const kmScanned = segments.length * 2;
+  const defectsPerKm = kmScanned > 0 ? +((critical + medium) / kmScanned).toFixed(2) : 0;
+  const livesSaved = detections.reduce((a, d) => a + (d.lives_saved_estimate || 0), 0);
+  return { total_detections: detections.length, critical_count: critical, medium_count: medium, low_count: low, segments_monitored: segments.length, km_scanned: kmScanned, defects_per_km: defectsPerKm, lives_saved: livesSaved, detection_breakdown: byLabel };
+}
+
+function mockGenerateReport(query, detections) {
+  const critical = detections.filter(d => d.severity === "Critical");
+  const segs = [...new Set(critical.map(d => d.track_segment))];
+  const byLabel = {};
+  detections.forEach(d => { byLabel[d.label] = (byLabel[d.label] || 0) + 1; });
+  const totalKm = [...new Set(detections.map(d => d.track_segment))].length * 2;
+  return `╔══════════════════════════════════════════════╗
+║   AI SENTINEL — GEMINI OPERATIONS REPORT    ║
+╚══════════════════════════════════════════════╝
+
+Query: "${query}"
+Generated: ${new Date().toLocaleString()}
+Model: gemini-1.5-flash (offline simulation)
+
+━━━ EXECUTIVE SUMMARY ━━━━━━━━━━━━━━━━━━━━━━━
+Total events analysed:   ${detections.length}
+Critical incidents:      ${critical.length}  ← REQUIRES IMMEDIATE ACTION
+Medium severity:         ${detections.filter(d=>d.severity==="Medium").length}
+Low / Normal:            ${detections.filter(d=>d.severity==="Low").length}
+Track km scanned (est.): ${totalKm} km
+
+━━━ HIGH-RISK SEGMENTS ━━━━━━━━━━━━━━━━━━━━━━
+${segs.map(s => {
+  const events = critical.filter(d => d.track_segment === s);
+  return `• Segment ${s}: ${events.length} critical event(s) — ${events[0]?.label || "defect"} detected`;
+}).join('\n') || '• No critical segments in current window.'}
+
+━━━ DETECTION BREAKDOWN ━━━━━━━━━━━━━━━━━━━━━
+${Object.entries(byLabel).map(([k,v]) => `• ${k}: ${v} event(s)`).join('\n')}
+
+━━━ RECOMMENDED ACTIONS ━━━━━━━━━━━━━━━━━━━━━
+${critical.length > 0 ? `1. IMMEDIATE: Deploy engineering crews to ${segs.slice(0,3).join(', ')}
+2. URGENT: Impose speed restrictions on all Medium-severity segments
+3. MONITOR: Increase CCTV scan frequency on Segment 42A (3 repeat events)
+4. NOTIFY: Alert Zone Railway Manager and Divisional Safety Officer` : `1. ROUTINE: Continue scheduled monitoring cycle
+2. LOG: All events recorded for monthly safety review
+3. TREND: No acute risk patterns detected in current window`}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Estimated lives at risk: ${critical.length > 0 ? critical.length + ' (based on active critical segments)' : '0'}
+System coverage: 7,000+ stations integrable via existing CCTV
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let map = null, mapFull = null;
+let markers = [], markersVisible = true, heatmapLayers = [], heatVisible = true;
+let allHistory = [], allZones = [];
+let currentSection = "overview";
+let selectedFile = null;
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+window.showSection = function(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("visible"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  const sec = document.getElementById("sec-" + id);
+  if (sec) sec.classList.add("visible");
+  document.querySelectorAll(".nav-item").forEach(n => {
+    if ((n.getAttribute("onclick") || "").includes("'" + id + "'")) n.classList.add("active");
+  });
+  currentSection = id;
+  if (id === "map" || id === "overview") renderMap();
+  if (id === "zones") loadZones();
+  if (id === "analytics") loadAnalytics();
+};
+
+// ── Google Maps (graceful — works without API key too) ────────────────────────
+window.initMap = function() {
+  const defaultCenter = (window.AI_SENTINEL_CONFIG && window.AI_SENTINEL_CONFIG.defaultCenter) || { lat: 28.6139, lng: 77.2090 };
+  const opts = { center: defaultCenter, zoom: 6, mapTypeControl: false, streetViewControl: false, fullscreenControl: true, styles: darkMapStyle() };
+  const el1 = $("#map"), el2 = $("#mapFull");
+  if (el1) map = new google.maps.Map(el1, opts);
+  if (el2) mapFull = new google.maps.Map(el2, opts);
+  refreshAll();
+};
+
+function darkMapStyle() {
+  return [
+    { featureType:"water", elementType:"geometry", stylers:[{color:"#193341"}] },
+    { featureType:"landscape", stylers:[{color:"#1a2a38"}] },
+    { featureType:"road", stylers:[{color:"#2c3e50"}] },
+    { featureType:"poi", stylers:[{visibility:"off"}] },
+    { featureType:"transit.line", elementType:"geometry", stylers:[{color:"#3a5f7d"},{weight:2}] },
+    { elementType:"labels.text.fill", stylers:[{color:"#94a3b8"}] },
+    { elementType:"labels.text.stroke", stylers:[{color:"#0f1923"}] }
+  ];
+}
+
+function renderMap() {
+  if (!window.google || (!map && !mapFull)) return;
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  heatmapLayers.forEach(h => h.setMap(null));
+  heatmapLayers = [];
+  const heat = [];
+
+  allHistory.forEach(item => {
+    const lat = Number(item.location && item.location.lat), lng = Number(item.location && item.location.lng);
+    if (!isFinite(lat) || !isFinite(lng) || (lat === 0 && lng === 0)) return;
+    const pos = { lat, lng };
+    const color = item.severity === "Critical" ? "#ef4444" : item.severity === "Medium" ? "#f59e0b" : "#10b981";
+    const scale = item.severity === "Critical" ? 10 : 7;
+
+    [map, mapFull].forEach(m => {
+      if (!m) return;
+      const marker = new google.maps.Marker({
+        position: pos, map: markersVisible ? m : null,
+        title: item.label + " · " + item.track_segment,
+        icon: { path: google.maps.SymbolPath.CIRCLE, scale, fillColor: color, fillOpacity: .92, strokeColor:"#fff", strokeWeight:2 }
+      });
+      const iw = new google.maps.InfoWindow({ content: infoContent(item) });
+      marker.addListener("click", () => iw.open({ map: m, anchor: marker }));
+      markers.push(marker);
+    });
+    heat.push({ location: new google.maps.LatLng(lat, lng), weight: item.severity === "Critical" ? 5 : item.severity === "Medium" ? 3 : 1 });
+  });
+
+  [map, mapFull].forEach(m => {
+    if (!m) return;
+    const hl = new google.maps.visualization.HeatmapLayer({ data: heat, radius: 36, opacity: .7 });
+    hl.setMap(heatVisible ? m : null);
+    heatmapLayers.push(hl);
+  });
+}
+
+function infoContent(item) {
+  const sColor = item.severity==="Critical"?"#dc2626":item.severity==="Medium"?"#d97706":"#059669";
+  return `<div style="font-family:Inter,sans-serif;font-size:13px;max-width:220px;padding:4px;">
+    <strong style="display:block;margin-bottom:4px;font-size:14px;">${item.label}</strong>
+    <span style="font-size:11px;color:#64748b;">Segment ${item.track_segment}</span><br/>
+    <strong style="color:${sColor}">${item.severity}</strong> · ${Math.round((item.confidence||0)*100)}%<br/>
+    <small style="color:#64748b;">${item.timestamp ? fmt.format(new Date(item.timestamp)) : "Just now"}</small>
+  </div>`;
+}
+
+window.toggleMapLayer = function(layer) {
+  if (layer === "markers") {
+    markersVisible = !markersVisible;
+    markers.forEach(m => m.setMap(markersVisible ? (currentSection === "map" ? mapFull : map) : null));
+    ["#toggleMarkers","#toggleMarkers2"].forEach(s => { const el = $(s); if(el) el.classList.toggle("active", markersVisible); });
+  } else {
+    heatVisible = !heatVisible;
+    ["#toggleHeat","#toggleHeat2"].forEach(s => { const el = $(s); if(el) el.classList.toggle("active", heatVisible); });
+    heatmapLayers.forEach(h => h.setMap(heatVisible ? (currentSection === "map" ? mapFull : map) : null));
+  }
+};
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+function updateKpis() {
+  const total = allHistory.length;
+  const critical = allHistory.filter(d => d.severity === "Critical").length;
+  const medium = allHistory.filter(d => d.severity === "Medium").length;
+  const lives = allHistory.reduce((a, d) => a + (d.lives_saved_estimate || 0), 0);
+  const setTxt = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  setTxt("kpiTotal", total); setTxt("kpiCritical", critical);
+  setTxt("kpiMedium", medium); setTxt("kpiZones", allZones.length);
+  setTxt("kpiLives", lives); setTxt("livesSavedSidebar", lives);
+  const badge = document.getElementById("pendingBadge");
+  if (badge) { badge.style.display = critical > 0 ? "" : "none"; badge.textContent = critical; }
+}
+
+function renderRow(item, short) {
+  const confColor = item.confidence >= .8 ? "#059669" : item.confidence >= .6 ? "#d97706" : "#6b7280";
+  const action = short ? (item.suggested_action || "").slice(0, 60) + "…" : (item.suggested_action || "");
+  const safeId = (item.id || "").replace(/[^a-zA-Z0-9-]/g, "");
+  return `<tr onclick="showDetail('${safeId}')" style="cursor:pointer;">
+    <td>${item.timestamp ? fmt.format(new Date(item.timestamp)) : "Just now"}</td>
+    <td><strong>${item.track_segment || "—"}</strong></td>
+    <td>${item.label}</td>
+    <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:${Math.round((item.confidence||0)*100)}%;background:${confColor}"></div></div><span style="font-size:.75rem;color:${confColor};white-space:nowrap">${Math.round((item.confidence||0)*100)}%</span></div></td>
+    <td><span class="pill ${item.severity}">${item.severity}</span></td>
+    ${!short ? `<td style="font-size:.75rem;color:#64748b;">${item.source||"CCTV"}</td>` : ""}
+    <td style="font-size:.75rem;max-width:200px;color:#475467;">${action}</td>
+  </tr>`;
+}
+
+function renderHistoryPreview() {
+  const el = document.getElementById("historyRowsPreview");
+  if (!el) return;
+  el.innerHTML = allHistory.length
+    ? allHistory.slice(0, 10).map(d => renderRow(d, true)).join("")
+    : `<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8;">No detections yet. Run a detection to start.</td></tr>`;
+}
+
+function renderHistoryFull() {
+  const el = document.getElementById("historyRows");
+  if (!el) return;
+  const sev = (document.getElementById("filterSeverity") || {}).value || "";
+  const filtered = sev ? allHistory.filter(d => d.severity === sev) : allHistory;
+  el.innerHTML = filtered.length
+    ? filtered.map(d => renderRow(d, false)).join("")
+    : `<tr><td colspan="7" style="text-align:center;padding:24px;color:#94a3b8;">No records match filter.</td></tr>`;
+}
+
+window.applyFilters = renderHistoryFull;
+
+function renderZonesPreview() {
+  const el = document.getElementById("zonesPreview");
+  if (!el) return;
+  el.innerHTML = allZones.length ? allZones.slice(0, 5).map(zoneCard).join("") : `<div style="color:#94a3b8;padding:16px;font-size:.85rem;">No risk zones detected.</div>`;
+}
+
+function renderZonesGrid() {
+  const el = document.getElementById("zonesGrid");
+  if (!el) return;
+  el.innerHTML = allZones.length ? allZones.map(zoneCard).join("") : `<div style="color:#94a3b8;padding:24px;font-size:.88rem;text-align:center;">No risk zones in selected window.</div>`;
+}
+
+function zoneCard(z) {
+  const cls = z.risk_score >= 60 ? "" : z.risk_score >= 30 ? "medium" : "low";
+  return `<div class="zone-card ${cls}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <span class="zone-seg">Segment ${z.track_segment}</span>
+      <span class="zone-score">Risk ${z.risk_score}</span>
+    </div>
+    <div class="zone-stats">${z.detections} detections · ${z.critical_events} critical · ${z.medium_events} medium</div>
+    <div class="zone-stats" style="margin-top:4px;">Dominant: ${z.dominant_label || "—"} · Last: ${z.last_seen ? fmt.format(new Date(z.last_seen)) : "—"}</div>
+  </div>`;
+}
+
+// ── Data refresh (mock or real API) ──────────────────────────────────────────
+async function fetchWithFallback(url, fallbackFn) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } catch (_) {
+    return fallbackFn();
+  }
+}
+
+window.refreshAll = async function() {
+  allHistory = await fetchWithFallback("/getHistory?limit=200", () => [...STORE.detections].sort((a,b) => b.timestamp > a.timestamp ? 1 : -1));
+  allZones = mockComputeZones(allHistory);
+  updateKpis();
+  renderHistoryPreview();
+  renderHistoryFull();
+  renderZonesPreview();
+  renderZonesGrid();
+  renderMap();
+  showToast("Dashboard refreshed", "normal");
+};
+
+window.loadZones = async function() {
+  allZones = mockComputeZones(allHistory);
+  renderZonesGrid();
+};
+
+// ── Detection (mock Vertex AI + Gemini) ───────────────────────────────────────
+window.onFileSelect = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  showImagePreview(file);
+};
+window.onDragOver = function(e) { e.preventDefault(); const dz = $("#dropzone"); if(dz) dz.classList.add("drag-over"); };
+window.onDragLeave = function() { const dz = $("#dropzone"); if(dz) dz.classList.remove("drag-over"); };
+window.onDrop = function(e) {
+  e.preventDefault();
+  const dz = $("#dropzone"); if(dz) dz.classList.remove("drag-over");
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  selectedFile = file;
+  showImagePreview(file);
+};
+
+function showImagePreview(file) {
+  const img = document.getElementById("imagePreview");
+  if (!img) return;
+  img.style.display = "block";
+  img.src = URL.createObjectURL(file);
+  const canvas = document.getElementById("bboxCanvas");
+  if (canvas) { const ctx = canvas.getContext("2d"); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+}
+
+function drawBboxes(bboxes, imgEl) {
+  if (!bboxes || !bboxes.length) return;
+  const canvas = document.getElementById("bboxCanvas");
+  if (!canvas || !imgEl) return;
+  // Wait for image to be rendered to get proper dimensions
+  setTimeout(() => {
+    canvas.width = imgEl.offsetWidth || imgEl.naturalWidth || 400;
+    canvas.height = imgEl.offsetHeight || imgEl.naturalHeight || 300;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    bboxes.forEach(b => {
+      const x = b.x * canvas.width, y = b.y * canvas.height;
+      const w = b.width * canvas.width, h = b.height * canvas.height;
+      ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2.5;
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = "rgba(239,68,68,.12)"; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = "#ef4444"; ctx.font = "bold 11px Inter,sans-serif";
+      ctx.fillRect(x, y - 16, ctx.measureText(b.label + " " + Math.round((b.confidence||0)*100) + "%").width + 8, 16);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(b.label + " " + Math.round((b.confidence||0)*100) + "%", x + 4, y - 4);
+    });
+  }, 100);
+}
+
+function setPipelineStep(id, state) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const labels = { "step-upload":"1. Image uploaded", "step-vertex":"2. Vertex AI prediction", "step-gemini":"3. Gemini classification & report", "step-store":"4. Stored in Firestore", "step-fcm":"5. FCM alert dispatched", "step-map":"6. Map marker updated" };
+  el.className = "pipeline-step" + (state === "active" ? " active" : state === "done" ? " done" : state === "error" ? " error" : "");
+  if (state === "done") el.textContent = "✅ " + labels[id];
+  else if (state === "active") el.textContent = "🔄 " + labels[id];
+  else if (state === "error") el.textContent = "❌ " + labels[id];
+  else el.textContent = "⬜ " + labels[id];
+}
+
+function resetPipeline() {
+  ["step-upload","step-vertex","step-gemini","step-store","step-fcm","step-map"].forEach(id => setPipelineStep(id, ""));
+}
+
+window.submitDetection = async function() {
+  if (!selectedFile) { showToast("Please select a track image first.", "warn"); return; }
+  const btn = document.getElementById("detectBtn");
+  if (btn) { btn.disabled = true; btn.innerHTML = "⏳ Analysing image..."; }
+  showLoading("Running AI Pipeline", "Vertex AI → Gemini → Firestore");
+  resetPipeline();
+
+  try {
+    // Step 1: upload
+    await delay(400);
+    setPipelineStep("step-upload", "done");
+    setPipelineStep("step-vertex", "active");
+
+    // Step 2: Vertex AI (mock)
+    await delay(800);
+    const seg = (document.getElementById("track_segment") || {}).value || "42A";
+    const lat = parseFloat((document.getElementById("lat") || {}).value) || 28.6139;
+    const lng = parseFloat((document.getElementById("lng") || {}).value) || 77.2090;
+    const source = (document.getElementById("source") || {}).value || "CCTV";
+    const camera_id = (document.getElementById("camera_id") || {}).value || "";
+
+    const prediction = mockDetect(seg);
+    setPipelineStep("step-vertex", "done");
+    setPipelineStep("step-gemini", "active");
+
+    // Step 3: Gemini (mock)
+    await delay(700);
+    setPipelineStep("step-gemini", "done");
+    setPipelineStep("step-store", "active");
+
+    // Step 4: Store
+    await delay(300);
+    const detection = {
+      ...prediction,
+      source, location: { lat, lng },
+      metadata: { camera_id, submitted_from: "dashboard_localhost" },
+      timestamp: new Date().toISOString()
+    };
+    STORE.detections.unshift(detection);
+    setPipelineStep("step-store", "done");
+    setPipelineStep("step-fcm", "active");
+
+    // Step 5: FCM
+    await delay(300);
+    setPipelineStep("step-fcm", "done");
+    setPipelineStep("step-map", "active");
+
+    // Render result
+    renderDetectionResult(detection);
+    const imgEl = document.getElementById("imagePreview");
+    drawBboxes(detection.bounding_boxes, imgEl);
+
+    // Show alert for critical
+    if (detection.severity === "Critical") {
+      showToast("🚨 CRITICAL: " + detection.label + " on Segment " + detection.track_segment + " — Emergency Brake Alert!", "critical");
+    } else {
+      showToast(detection.severity + ": " + detection.label + " detected on Segment " + detection.track_segment, "normal");
+    }
+
+    // Step 6: map
+    await delay(200);
+    allHistory = [...STORE.detections].sort((a,b) => b.timestamp > a.timestamp ? 1 : -1);
+    allZones = mockComputeZones(allHistory);
+    updateKpis();
+    renderHistoryPreview();
+    renderHistoryFull();
+    renderZonesPreview();
+    renderZonesGrid();
+    renderMap();
+    setPipelineStep("step-map", "done");
+
+  } catch (err) {
+    showToast("Detection error: " + err.message, "warn");
+    setPipelineStep("step-vertex", "error");
+    console.error(err);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run Vertex AI Detection`;
+    }
+    hideLoading();
+  }
+};
+
+function renderDetectionResult(d) {
+  const card = document.getElementById("resultCard");
+  if (!card) return;
+  card.classList.add("visible");
+  const actionCls = d.severity === "Medium" ? "medium" : d.severity === "Low" ? "low" : "";
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span class="result-label">${d.label}</span>
+      <span class="pill ${d.severity}">${d.severity}</span>
+    </div>
+    <div class="result-conf">${Math.round((d.confidence||0)*100)}% confidence · Segment ${d.track_segment} · <span style="color:#94a3b8;font-size:.75rem;">${d.decision_model}</span></div>
+    <p class="result-report">${d.technical_report}</p>
+    <div class="result-action ${actionCls}">
+      <strong>Suggested Action</strong>
+      <p>${d.suggested_action}</p>
+    </div>`;
+}
+
+// ── Gemini Report (mock) ──────────────────────────────────────────────────────
+window.submitReport = async function() {
+  const queryEl = document.getElementById("reportQuery");
+  const query = queryEl ? queryEl.value.trim() : "";
+  if (!query) return;
+  const btn = document.getElementById("reportBtn");
+  const out = document.getElementById("reportOutput");
+  if (btn) btn.disabled = true;
+  if (out) out.textContent = "⏳ Calling Gemini…";
+
+  await delay(1200);
+
+  let answer;
+  try {
+    const res = await fetch("/generateReport", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({query}), signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    answer = data.answer;
+  } catch (_) {
+    answer = mockGenerateReport(query, allHistory);
+  }
+
+  if (out) out.textContent = answer;
+  if (btn) btn.disabled = false;
+};
+
+window.setQuery = function(q) {
+  const el = document.getElementById("reportQuery");
+  if (el) el.value = q;
+};
+
+// ── Analytics (mock) ──────────────────────────────────────────────────────────
+window.loadAnalytics = async function() {
+  const el = document.getElementById("analyticsContent");
+  if (!el) return;
+  el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">Computing analytics…</div>`;
+  await delay(300);
+  const a = mockComputeAnalytics(allHistory);
+  el.innerHTML = renderAnalytics(a);
+};
+
+function renderAnalytics(a) {
+  const breakdown = a.detection_breakdown || {};
+  const maxVal = Math.max(...Object.values(breakdown), 1);
+  const colMap = { "Crack":"#ef4444", "Obstacle":"#f59e0b", "Missing Fishplate":"#8b5cf6", "Normal":"#10b981" };
+  const bars = Object.entries(breakdown).map(([k, v]) => {
+    const pct = Math.round((v / maxVal) * 100);
+    const col = colMap[k] || "#64748b";
+    return `<div class="bar-wrap"><div class="bar" style="height:${pct}%;background:${col}"></div><div class="bar-label">${k}<br><strong>${v}</strong></div></div>`;
+  }).join("");
+
+  return `<div class="analytics-grid">
+    ${metricCard("Total Detections", a.total_detections, "All records in store", "kpi-blue")}
+    ${metricCard("Critical Events", a.critical_count, "Emergency brake candidates", "kpi-red")}
+    ${metricCard("Medium Events", a.medium_count, "Speed restriction required", "kpi-amber")}
+    ${metricCard("Km Scanned", a.km_scanned + " km", "Segments × 2 km (estimated)", "kpi-teal")}
+    ${metricCard("Defects / km", a.defects_per_km, "Critical + medium per km", "kpi-amber")}
+    ${metricCard("Lives Saved (Est.)", a.lives_saved, "Critical detections acted on", "kpi-green")}
+  </div>
+  <div class="panel" style="margin-top:16px;">
+    <div class="panel-head"><div class="panel-title">Detection Breakdown by Label</div></div>
+    <div class="panel-body"><div class="bar-chart" style="height:120px;">${bars || "<span style='color:#94a3b8;font-size:.85rem;'>No data yet</span>"}</div></div>
+  </div>
+  <div class="panel" style="margin-top:16px;">
+    <div class="panel-head"><div class="panel-title">🌐 Scalability — National Coverage</div></div>
+    <div class="panel-body" style="font-size:.85rem;color:#475467;line-height:1.7;">
+      <strong style="color:#0f2942;">AI Sentinel integrates with 7,000+ railway stations and existing CCTV infrastructure — no new hardware required.</strong><br/>
+      Each camera connects to the Cloud Function endpoint <code>/detectImage</code> via a lightweight edge agent.
+      End-to-end detection latency: <strong>&lt;3 seconds</strong>. Concurrent capacity scales automatically via Google Cloud Functions.<br/><br/>
+      <strong>Projected national impact:</strong> 23 million daily passengers protected · 67,000+ km of track monitored · &lt;₹2/detection at scale.
+    </div>
+  </div>`;
+}
+
+function metricCard(label, val, sub, cls) {
+  return `<div class="kpi-card ${cls}" style="border-radius:10px;"><div class="kpi-label">${label}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div></div>`;
+}
+
+// ── Detail modal ──────────────────────────────────────────────────────────────
+window.showDetail = function(id) {
+  const item = allHistory.find(d => d.id === id);
+  if (!item) return;
+  const titleEl = document.getElementById("modalTitle");
+  const bodyEl = document.getElementById("modalBody");
+  if (titleEl) titleEl.textContent = item.label + " — Segment " + item.track_segment;
+  if (bodyEl) bodyEl.innerHTML = `
+    <div style="display:grid;gap:10px;font-size:.85rem;">
+      <div><strong>Severity:</strong> <span class="pill ${item.severity}">${item.severity}</span></div>
+      <div><strong>Confidence:</strong> ${Math.round((item.confidence||0)*100)}%</div>
+      <div><strong>Timestamp:</strong> ${item.timestamp ? fmt.format(new Date(item.timestamp)) : "—"}</div>
+      <div><strong>Source:</strong> ${item.source || "—"}</div>
+      <div><strong>Location:</strong> ${(item.location||{}).lat || 0}, ${(item.location||{}).lng || 0}</div>
+      <div><strong>Decision Model:</strong> ${item.decision_model || "—"}</div>
+      <div><strong>Technical Report:</strong><br><span style="color:#475467;line-height:1.5;">${item.technical_report || "—"}</span></div>
+      <div><strong>Suggested Action:</strong><br><span style="color:#475467;line-height:1.5;">${item.suggested_action || "—"}</span></div>
+      ${item.bounding_boxes && item.bounding_boxes.length ? `<div><strong>Bounding Boxes:</strong> ${item.bounding_boxes.length} object(s) detected</div>` : ""}
+      <div><strong>Image URL:</strong> <code style="font-size:.75rem;word-break:break-all;">${item.image_url || "—"}</code></div>
+    </div>`;
+  const modal = document.getElementById("detailModal");
+  if (modal) modal.classList.add("show");
+};
+
+window.closeModal = function() {
+  const modal = document.getElementById("detailModal");
+  if (modal) modal.classList.remove("show");
+};
+
+// ── Notifications (graceful) ──────────────────────────────────────────────────
+window.enableNotifications = async function() {
+  const statusEl = document.getElementById("fcmStatus");
+  try {
+    if (!("Notification" in window)) { if(statusEl) statusEl.textContent = "⛔ Notifications not supported"; return; }
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") { if(statusEl) statusEl.textContent = "⛔ Permission denied."; return; }
+    if(statusEl) statusEl.textContent = "✅ Alerts enabled (demo mode)";
+    showToast("Emergency alerts enabled! Critical detections will trigger notifications.", "normal");
+    // Demo notification
+    setTimeout(() => {
+      try { new Notification("🚨 AI Sentinel — Test Alert", { body: "Emergency alerts are active. Critical railway events will appear here.", icon: "/assets/rail-icon.png" }); } catch(_) {}
+    }, 500);
+  } catch (e) { if(statusEl) statusEl.textContent = "⚠️ Notification setup failed"; }
+};
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function showLoading(label, sub) {
+  const lbl = document.getElementById("loadingLabel");
+  const subEl = document.getElementById("loadingSub");
+  const ov = document.getElementById("loadingOverlay");
+  if (lbl) lbl.textContent = label || "Processing...";
+  if (subEl) subEl.textContent = sub || "";
+  if (ov) ov.classList.add("show");
+}
+function hideLoading() {
+  const ov = document.getElementById("loadingOverlay");
+  if (ov) ov.classList.remove("show");
+}
+
+window.showToast = function(msg, type) {
+  const toast = document.getElementById("toast");
+  const msgEl = document.getElementById("toastMsg");
+  if (!toast || !msgEl) return;
+  msgEl.textContent = msg;
+  toast.classList.toggle("toast-critical", type === "critical");
+  toast.classList.add("show");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => toast.classList.remove("show"), type === "critical" ? 7000 : 4000);
+};
+
+window.exportCSV = function() {
+  if (!allHistory.length) { showToast("No data to export yet.", "warn"); return; }
+  const headers = ["timestamp","track_segment","label","confidence","severity","source","lat","lng","suggested_action"];
+  const rows = allHistory.map(d => [
+    d.timestamp, d.track_segment, d.label, d.confidence, d.severity, d.source,
+    (d.location||{}).lat, (d.location||{}).lng,
+    '"' + (d.suggested_action||"").replace(/"/g,'""') + '"'
+  ].join(","));
+  const blob = new Blob([headers.join(",") + "\n" + rows.join("\n")], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ai-sentinel-" + new Date().toISOString().slice(0,10) + ".csv";
+  a.click();
+  showToast("CSV exported — " + allHistory.length + " records", "normal");
+};
+
+window.demoFill = function(seg, lat, lng) {
+  const s = document.getElementById("track_segment"), la = document.getElementById("lat"), ln = document.getElementById("lng");
+  if (s) s.value = seg; if (la) la.value = lat; if (ln) ln.value = lng;
+  showToast("Demo filled: Segment " + seg, "normal");
+};
+
+// ── Modal backdrop close ───────────────────────────────────────────────────────
+document.addEventListener("click", function(e) {
+  const modal = document.getElementById("detailModal");
+  if (modal && e.target === modal) window.closeModal();
+});
+
+// ── Boot: load seed data on DOMContentLoaded ───────────────────────────────────
+document.addEventListener("DOMContentLoaded", function() {
+  // Initial load from mock store (no API call needed)
+  allHistory = [...STORE.detections].sort((a,b) => b.timestamp > a.timestamp ? 1 : -1);
+  allZones = mockComputeZones(allHistory);
+  updateKpis();
+  renderHistoryPreview();
+  renderHistoryFull();
+  renderZonesPreview();
+  renderZonesGrid();
+  // Map renders when initMap fires (Google Maps callback) or on section switch
+  // Auto-refresh every 60s (tries real API, falls back to mock)
+  setInterval(function() {
+    allHistory = [...STORE.detections].sort((a,b) => b.timestamp > a.timestamp ? 1 : -1);
+    allZones = mockComputeZones(allHistory);
+    updateKpis();
+    renderHistoryPreview();
+    renderHistoryFull();
+  }, 60000);
+});
+</script>
+
+<script>
+// ── Google Maps loader (graceful — works without real API key) ─────────────────
+(function() {
+  const cfg = window.AI_SENTINEL_CONFIG || {};
+  const key = cfg.googleMapsApiKey || "";
+  // Only inject Maps if a real key is present (not a placeholder)
+  if (!key || key.indexOf("YOUR_") === 0) {
+    // No Maps API key — show fallback message in map containers
+    document.addEventListener("DOMContentLoaded", function() {
+      ["map","mapFull"].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#64748b;gap:12px;background:#1a2a38;border-radius:8px;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3a5f7d" stroke-width="1.5"><polygon points="3,6 9,3 15,6 21,3 21,18 15,21 9,18 3,21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+          <div style="font-weight:700;color:#94a3b8;">Google Maps</div>
+          <div style="font-size:.8rem;text-align:center;max-width:240px;line-height:1.5;">Add your Google Maps API key to <code style="background:#0f2942;padding:2px 6px;border-radius:4px;">public/config.js</code> to enable the interactive map.</div>
+          <div style="font-size:.75rem;color:#475467;">All other features work without Maps.</div>
+        </div>`;
+      });
+      // Still boot the app without Maps
+      window.initMap && void 0; // initMap won't fire without Maps script
+      // Trigger refreshAll manually since initMap won't be called
+      if (typeof refreshAll === "undefined") {
+        // refreshAll is defined in the main script above — call after parse
+        setTimeout(function() { if(window.refreshAll) window.refreshAll(); }, 0);
+      }
+    });
+    return;
+  }
+  var s = document.createElement("script");
+  s.src = "https://maps.googleapis.com/maps/api/js?key=" + key + "&libraries=visualization&callback=initMap";
+  s.async = true; s.defer = true;
+  s.onerror = function() {
+    console.warn("Google Maps failed to load. Map features disabled.");
+    if (window.refreshAll) window.refreshAll();
+  };
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "_comment": "Sample request body for POST /detectImage — use this for API testing",
+  "imageBase64": "BASE64_ENCODED_IMAGE_CONTENT_HERE",
+  "mimeType": "image/jpeg",
+  "source": "CCTV",
+  "track_segment": "42A",
+  "location": {
+    "lat": 28.6139,
+    "lng": 77.209
+  },
+  "metadata": {
+    "camera_id": "cctv-ndls-042a",
+    "train_id": "EXP-12951",
+    "corridor": "Delhi-Mumbai"
+  },
+  "fcmToken": "OPTIONAL_BROWSER_FCM_TOKEN"
+}

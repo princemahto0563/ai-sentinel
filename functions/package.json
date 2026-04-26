@@ -1,0 +1,26 @@
+{
+  "name": "ai-sentinel-functions",
+  "version": "2.0.0",
+  "description": "Firebase Cloud Functions for AI Sentinel – Railway Safety Intelligence System.",
+  "main": "src/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "serve": "firebase emulators:start --only functions,firestore,hosting",
+    "deploy": "firebase deploy --only functions,firestore,hosting,storage",
+    "test": "node -e \"console.log('Tests: TODO')\""
+  },
+  "dependencies": {
+    "@google-cloud/aiplatform": "^6.6.0",
+    "@google/genai": "^0.7.0",
+    "firebase-admin": "^13.0.1",
+    "firebase-functions": "^6.1.2",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.17.0"
+  },
+  "private": true
+}

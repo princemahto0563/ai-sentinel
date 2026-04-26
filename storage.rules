@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Detection images: written by Cloud Functions (Admin SDK).
+    // Read-only for authenticated users. Adjust for your auth model.
+    match /detections/{imageId} {
+      allow read: if true;   // public read for demo dashboard
+      allow write: if false; // Cloud Functions Admin SDK only
+    }
+
+    // Block everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
